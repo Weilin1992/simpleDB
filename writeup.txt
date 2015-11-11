@@ -1,0 +1,8 @@
+design decisions:
+in BufferPool.java
+add [int numPages] to store the max number of the pages that the BufferPool can accommadate
+add [HashMap<PageId,Page> pagesHashmap] to store the pages.
+add [HashMap<PageId,Integer> countHashmap] to store when the page recently used,to help to implement LRU and MRU
+
+I spent 4 or more hours on this assigment,and which confused me is the pincount.I thought the pincount has the same function with lock,but I don't know how to use a lock, and I implement my own pincount method but it doesn't work.
+
