@@ -68,7 +68,27 @@ public class Tuple {
 	    return null;
 	else return tupleFields[i];
     }
+    
+    public static Tuple merge(Tuple t1, Tuple t2) {
+        // some code goes here
+        TupleDesc td1=t1.getTupleDesc(), td2= t2.getTupleDesc();
 
+        TupleDesc mergedTd = TupleDesc.combine(td1,td2);
+
+
+        Tuple mergedTp = new Tuple(mergedTd);
+        int i;
+        //Clever use of i and j.
+        for(i = 0; i < td1.numFields(); i++){
+            mergedTp.setField(i, t1.getField(i));
+        }
+        
+        for(int j = 0; j < td2.numFields(); j++){
+            mergedTp.setField(i, t2.getField(j));
+            i++;
+        }
+        return mergedTp;
+    }
     /**
      * Returns the contents of this Tuple as a string.
      * Note that to pass the system tests, the format needs to be as

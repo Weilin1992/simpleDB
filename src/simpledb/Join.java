@@ -12,6 +12,9 @@ public class Join extends AbstractDbIterator {
     private DbIterator _innerRelation;
     private Iterator<Tuple> _outerPage=null;
     private Iterator<Tuple> _innerPage=null;
+    private HeapFileIterator _innerHeapFile;
+    private HeapFileIterator _outerHeapFile;
+    private boolean isFirsttime = true;
 
     private Tuple _outerRecent=null;
     private Tuple _innerRecent=null;
@@ -19,6 +22,13 @@ public class Join extends AbstractDbIterator {
     private int _joinType = 0;
     private int _numMatches =0;
     private int _numComp=0;
+
+    private int _testPage = 0;
+
+    private int count = 0;
+
+    //private ArrayList<Tuple> tuples = new ArrayList<Tuple>();
+
   
     public static final int SNL = 0;
     public static final int PNL = 1;    
@@ -34,7 +44,10 @@ public class Join extends AbstractDbIterator {
      * @param child2 Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-	//IMPLEMENT THIS
+	_predicate = p;
+    _outerRelation = child1;
+    _innerRelation = child2;
+   
     }
 
     public void setJoinAlgorithm(int joinAlgo){
@@ -44,22 +57,46 @@ public class Join extends AbstractDbIterator {
      * @see simpledb.TupleDesc#combine(TupleDesc, TupleDesc) for possible implementation logic.
      */
     public TupleDesc getTupleDesc() {
-	//IMPLEMENT THIS
-	return null;
+        TupleDesc ret = TupleDesc.combine(_outerRecent.getTupleDesc(),_innerRecent.getTupleDesc());
+	   return ret;
+
     }
 
     public void open()
         throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
+            _outerRelation.open();
+            _innerRelation.open();
+            /*
+            SeqScan _outer = (SeqScan)_outerRelation;
+            SeqScan _inner = (SeqScan)_innerRelation;
+
+            _outer.open();
+            _inner.open();
+
+            _outerHeapFile = (HeapFileIterator)_outer.getIterator();
+            _innerHeapFile = (HeapFileIterator)_inner.getIterator();
+
+            _outerHeapFile.open();
+            _innerHeapFile.open();
+            //System.out.println("not failed yet");
+            _outerPage = _outerHeapFile.getCurrentPage().iterator();
+            _innerPage = _innerHeapFile.getCurrentPage().iterator();
+            */
 		//IMPLEMENT THIS
 
     }
 
     public void close() {
+        _outerRelation.close();
+        _innerRelation.close();
+        super.close();
 //IMPLEMENT THIS
 
     }
 
     public void rewind() throws DbException, TransactionAbortedException, IOException {
+        _outerRelation.rewind();
+        _innerRelation.rewind();
 //IMPLEMENT THIS
     }
 
@@ -81,7 +118,7 @@ public class Join extends AbstractDbIterator {
      * @return The next matching tuple.
      * @see JoinPredicate#filter
      */
-    protected Tuple readNext() throws TransactionAbortedException, DbException {
+    protected Tuple readNext() throws TransactionAbortedException, DbException{
 	switch(_joinType){
 	case SNL: return SNL_readNext();
 	case PNL: return PNL_readNext();
@@ -92,15 +129,103 @@ public class Join extends AbstractDbIterator {
 	}
     }
 
-    protected Tuple SNL_readNext() throws TransactionAbortedException, DbException {
-	//IMPLEMENT THIS 
-	return null;
+    protected Tuple SNL_readNext() throws TransactionAbortedException, DbException{
+    Tuple result = null;
+    while(true)
+    {
+        _numComp++;
+        //System.out.println(_numComp);
+        boolean innerhasNext = false;
+        boolean outerhasNext = false;
+        try{
+                outerhasNext = _outerRelation.hasNext();
+            }catch(IOException e){
+            }
+        try{
+                innerhasNext = _innerRelation.hasNext();
+            }catch(IOException e){
+            }
+        while(_outerRecent!=null&&innerhasNext)
+        {
+            _innerRecent = _innerRelation.next();
+            try{
+                innerhasNext = _innerRelation.hasNext();
+            }catch(IOException e){
+            }
+            if(_predicate.filter(_outerRecent,_innerRecent))
+            {
+            result = Tuple.merge(_outerRecent,_innerRecent);
+            _numMatches++;
+            return result;
+            }
+        }
+        try{
+                outerhasNext = _outerRelation.hasNext();
+            }catch(IOException e){
+            }
+        if(!outerhasNext)
+        {
+            return null;
+        }
+        _outerRecent = _outerRelation.next();
+        if(_innerRecent!=null)
+        {
+        try{
+            _innerRelation.rewind();
+        }catch(IOException e){
+
+        }
+    }
+    }
+    //return result;
     }
 
 
     protected Tuple PNL_readNext() throws TransactionAbortedException, DbException {
-	//IMPLEMENT THIS (EXTRA CREDIT ONLY)
-	return null;
+        Tuple result = null;
+        try{
+            if(isFirsttime)
+            {
+                _outerHeapFile = (HeapFileIterator)((SeqScan)_outerRelation).getIterator();
+                _outerPage = _outerHeapFile.getCurrentPage().iterator();
+                isFirsttime = false;
+            }
+            while(result == null)
+            {
+                while(_innerRecent != null || _innerRelation.hasNext()){
+                if(_innerRecent == null){
+                    _innerRecent = _innerRelation.next();
+                }
+                while(_outerPage.hasNext()){
+                    _outerRecent = _outerPage.next();
+                    _numComp++;
+                    if(_predicate.filter(_outerRecent,_innerRecent)){
+                        
+                        result = Tuple.merge(_outerRecent,_innerRecent);
+                        _numMatches+=1;
+                        return result;
+                    }   
+                }
+                _innerRecent = null;
+                _outerPage = _outerHeapFile.getCurrentPage().iterator();
+                }  
+                //System.out.println(_numMatches);
+                if(_outerHeapFile.hasNextPage())
+                {
+                    _outerPage = _outerHeapFile.nextPage().iterator();
+                    _testPage++;
+                    //System.out.println(_testPage);
+                }
+                else return null;
+                _innerRelation.rewind();
+            }
+        }catch(IOException e){
+
+        }
+        
+        
+        return result;
+
     }
 
 
@@ -111,9 +236,86 @@ public class Join extends AbstractDbIterator {
 
 
     protected Tuple SMJ_readNext() throws TransactionAbortedException, DbException {
-	
-	//IMPLEMENT THIS. YOU CAN ASSUME THE JOIN PREDICATE IS ALWAYS =
-	return null;
+        Tuple result = null;
+        try {
+         if(_outerRecent == null&&_outerRelation.hasNext())
+                _outerRecent = _outerRelation.next();
+            if(_innerRecent == null&&_outerRelation.hasNext())
+                _innerRecent = _innerRelation.next();
+        while (true)
+        {
+             //System.out.println("count > 0");
+            if(count > 0)
+            {
+                //System.out.println("count > 0");
+                if(_innerRelation.hasNext())
+                    _innerRecent = _innerRelation.next();
+                else {
+                    if(_outerRelation.hasNext())
+                    {
+                        _outerRecent = _outerRelation.next();
+                        count--;
+                        while(count > 0)
+                        {
+                            count--;
+                            ((SeqScan)_innerRelation).previous();
+                        }
+                    }
+                    else return null;
+                }
+            }
+            if(_innerRecent == null)
+                return null;
+            if(_predicate.filterLessThan(_outerRecent,_innerRecent))
+            {
+                //System.out.println("filterLessThan");
+
+                if(count > 0)
+                {
+                    if(_outerRelation.hasNext())
+                        _outerRecent = _outerRelation.next();
+                    else 
+                        { 
+                            count = 0;
+                            return null;}
+                    count++;
+                    while(count > 0)
+                    {
+                        count--;
+                        ((SeqScan)_innerRelation).previous();
+                    }
+                    _innerRecent = _innerRelation.next();
+                } else if(_outerRelation.hasNext())
+                {
+                    _outerRecent = _outerRelation.next();
+                    count = 0;
+                }
+                else return null;
+
+            }
+            else if(_predicate.filterGreaterThan(_outerRecent,_innerRecent))
+            {
+                //System.out.println("filtergreaterThan");
+                if(_innerRelation.hasNext())
+                {
+                    _innerRecent = _innerRelation.next();
+                    count = 0;
+                }
+                else return null;
+            }
+            else if(_predicate.filter(_outerRecent,_innerRecent))
+            {
+                //System.out.println("equality");
+                _numMatches++;
+                result = Tuple.merge(_outerRecent,_innerRecent);
+                count++;
+                return result;
+            }
+        }
+   }catch(IOException e){
+
+   }
+	return result;
     }
 
     protected Tuple HJ_readNext() throws TransactionAbortedException, DbException {

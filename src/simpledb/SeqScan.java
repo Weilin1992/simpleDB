@@ -9,6 +9,7 @@ import java.io.*;
  */
 public class SeqScan implements DbIterator {
 
+
     TransactionId _tid;
     int _tableId;
     String _tableAlias;

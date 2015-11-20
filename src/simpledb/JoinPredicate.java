@@ -37,14 +37,43 @@ public class JoinPredicate {
      * @return true if the tuples satisfy the predicate.
      */
     public boolean filter(Tuple t1, Tuple t2) {
-
+        //System.out.println("not failed yet");
         Field tuple1 = getLeftField(t1);
+
         Field tuple2 = getRightField(t2);
+        //System.out.println("not fail yet");
         return tuple1.compare(_op,tuple2);
 	//IMPLEMENT THIS
 	
 	
     }
+
+
+    public boolean filterLessThan(Tuple t1, Tuple t2) {
+        //System.out.println("not failed yet");
+        Field tuple1 = getLeftField(t1);
+
+        Field tuple2 = getRightField(t2);
+        //System.out.println("not fail yet");
+        return tuple1.compare(Predicate.Op.LESS_THAN,tuple2);
+    //IMPLEMENT THIS
+    
+    
+    }
+
+    public boolean filterGreaterThan(Tuple t1, Tuple t2) {
+        //System.out.println("not failed yet");
+        Field tuple1 = getLeftField(t1);
+
+        Field tuple2 = getRightField(t2);
+        //System.out.println("not fail yet");
+        return tuple1.compare(Predicate.Op.GREATER_THAN,tuple2);
+    //IMPLEMENT THIS
+    
+    
+    }
+
+
 
     public Field getLeftField(Tuple t){
 	return t.getField(_leftField);

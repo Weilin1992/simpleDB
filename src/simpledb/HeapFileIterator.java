@@ -25,8 +25,25 @@ public class HeapFileIterator implements DbFileIterator {
         throws DbException, TransactionAbortedException, IOException {
 	
         _currentPage = readPage(_currentPageId++);
+        //System.out.println("open" + _currentPageId);
 	 _pagesRead++;
         _tupleIterator = _currentPage.iterator();
+        //(new Exception()).printStackTrace();
+    }
+    public boolean hasNextPage()
+    {
+        if(_currentPageId < (_numPages))
+            return true;
+        else return false;
+    }
+
+    public Page nextPage()throws DbException, TransactionAbortedException, IOException
+    {
+        
+        _currentPage = readPage(_currentPageId++);
+        _tupleIterator = _currentPage.iterator();
+        _pagesRead++;
+        return _currentPage;
     }
 
     public boolean hasNext()
@@ -107,10 +124,11 @@ public class HeapFileIterator implements DbFileIterator {
     private Page readPage(int pageNumber) 
     	throws DbException, TransactionAbortedException, IOException {
         // File == table because we do one file per table
-	//	System.out.println("readpage:"+_file.id()+" page:"+pageNumber);
+		//System.out.println("readpage:"+_file.id()+" page:"+pageNumber);
         int tableId = _file.id();
         int pageId = pageNumber;
-	//	System.out.println("Page is now "+pageNumber);
+    	//System.out.println("Page(new Exception()).printStackTrace(); is now "+pageNumber);
+        //System.out.println("total Page number"+_numPages);
         HeapPageId pid = new HeapPageId(tableId, pageId);
        return Database.getBufferPool().getPage(_transactionId, pid, Permissions.READ_ONLY);
     }

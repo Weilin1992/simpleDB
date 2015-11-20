@@ -50,7 +50,7 @@ public class JoinTest {
         SeqScan ss2 = new SeqScan(tid, table2.id(), "");
         JoinPredicate p = new JoinPredicate(0, Predicate.Op.EQUALS, 0);
         Join joinOp = new Join(p, ss1, ss2);
-	joinOp.setJoinAlgorithm(Join.SNL);
+	joinOp.setJoinAlgorithm(Join.PNL);
 
         // test the join results
         SystemTestUtil.matchTuples(joinOp, expectedResults);
@@ -91,7 +91,7 @@ public class JoinTest {
         SeqScan ss2 = new SeqScan(tid, table2.id(), "");
         JoinPredicate p = new JoinPredicate(0, Predicate.Op.EQUALS, 0);
         Join joinOp = new Join(p, ss1, ss2);
-	joinOp.setJoinAlgorithm(Join.SNL);
+	joinOp.setJoinAlgorithm(Join.PNL);
 
         // create and drop the join results
         SystemTestUtil.countJoinTuples(joinOp);
