@@ -154,7 +154,7 @@ public class Join extends AbstractDbIterator {
             }
             if(_predicate.filter(_outerRecent,_innerRecent))
             {
-            result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));;
+            result = joinTuple(_outerRecent,_innerRecent,getTupleDesc());;
             _numMatches++;
             return result;
             }
@@ -201,7 +201,7 @@ public class Join extends AbstractDbIterator {
                     _numComp++;
                     if(_predicate.filter(_outerRecent,_innerRecent)){
                         
-                        result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));;
+                        result = joinTuple(_outerRecent,_innerRecent,getTupleDesc());;
                         _numMatches+=1;
                         return result;
                     }   
@@ -307,7 +307,7 @@ public class Join extends AbstractDbIterator {
             {
                 //System.out.println("equality");
                 _numMatches++;
-                result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));
+                result = joinTuple(_outerRecent,_innerRecent,getTupleDesc());
                 count++;
                 return result;
             }
@@ -336,7 +336,7 @@ public class Join extends AbstractDbIterator {
 
         for(int i = 0; i < _innerlength; i++){
             Field f = inner.getField(i);
-            result.setField(i + out_len,f);
+            result.setField(i + _outerlength,f);
         }
        return result;
     }
