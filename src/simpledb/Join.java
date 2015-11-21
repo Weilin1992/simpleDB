@@ -198,7 +198,7 @@ public class Join extends AbstractDbIterator {
                 }
                 while(_outerPage.hasNext()){
                     _outerRecent = _outerPage.next();
-                    _numComp++;
+                    _numComp+=1;
                     if(_predicate.filter(_outerRecent,_innerRecent)){
                         
                         result = joinTuple(_outerRecent,_innerRecent,getTupleDesc());;
@@ -266,6 +266,7 @@ public class Join extends AbstractDbIterator {
             }
             if(_innerRecent == null)
                 return null;
+            _numComp++;
             if(_predicate.filterLessThan(_outerRecent,_innerRecent))
             {
                 //System.out.println("filterLessThan");
