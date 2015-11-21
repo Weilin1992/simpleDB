@@ -154,7 +154,7 @@ public class Join extends AbstractDbIterator {
             }
             if(_predicate.filter(_outerRecent,_innerRecent))
             {
-            result = Tuple.merge(_outerRecent,_innerRecent);
+            result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));;
             _numMatches++;
             return result;
             }
@@ -201,7 +201,7 @@ public class Join extends AbstractDbIterator {
                     _numComp++;
                     if(_predicate.filter(_outerRecent,_innerRecent)){
                         
-                        result = Tuple.merge(_outerRecent,_innerRecent);
+                        result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));;
                         _numMatches+=1;
                         return result;
                     }   
@@ -307,7 +307,7 @@ public class Join extends AbstractDbIterator {
             {
                 //System.out.println("equality");
                 _numMatches++;
-                result = Tuple.merge(_outerRecent,_innerRecent);
+                result = joinTuple(_outerRecent,_innerRecent,getTupleDesc(_innerRecent,_outerRecent));
                 count++;
                 return result;
             }
@@ -325,8 +325,20 @@ public class Join extends AbstractDbIterator {
 
 
     private Tuple joinTuple(Tuple outer, Tuple inner, TupleDesc tupledesc){
-	//IMPLEMENT THIS
-	return null;
+	   
+        int _outerlength = outer.getTupleDesc().numFields();
+        int _innerlength = inner.getTupleDesc().numFields();
+        Tuple result = new Tuple(tupledesc);
+        for(int i = 0; i < _outerlength; i++){
+            Field f = outer.getField(i);
+            result.setField(i, f);
+        }
+
+        for(int i = 0; i < _innerlength; i++){
+            Field f = inner.getField(i);
+            result.setField(i + out_len,f);
+        }
+       return result;
     }
 
     public int getNumMatches(){
